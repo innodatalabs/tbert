@@ -98,7 +98,7 @@ python -m tbert.cli.cmp_jsonl \
     /tmp/output-tf.jsonl
 ```
 
-To see ouput similar to this:
+Expect ouput similar to this:
 ```
 Max float values delta: 4.199999999876525e-05
 Structure is identical
