@@ -22,14 +22,14 @@ To run CLI utilities, original TF BERT code is required, as well as
 TensorFlow library:
 
 ```
-$ pip install tensorflow
-$ mkdir tf
-$ cd tf
-$ git clone https://github.com/google-research/bert
-$ cd ..
-$ export PYTHONPATH=.:tf/bert
-$ tbert.cli.extract_features --help
-$ tbert.cli.convert --help
+pip install tensorflow
+mkdir tf
+cd tf
+git clone https://github.com/google-research/bert
+cd ..
+export PYTHONPATH=.:tf/bert
+tbert.cli.extract_features --help
+tbert.cli.convert --help
 ```
 
 Original TF BERT code is needed as we use it to do the tokenization.
