@@ -28,8 +28,8 @@ cd tf
 git clone https://github.com/google-research/bert
 cd ..
 export PYTHONPATH=.:tf/bert
-tbert.cli.extract_features --help
-tbert.cli.convert --help
+python -m tbert.cli.extract_features --help
+python -m tbert.cli.convert --help
 ```
 
 Original TF BERT code is needed as we use it to do the tokenization.
@@ -43,12 +43,9 @@ pytest tbert/test
 
 ### Converting TF BERT pre-trained checkpoint to tBERT
 
-* Create data directory to hold the checkpoints
+* Download TF BERT checkpoint and unzip it
   ```
   mkdir data
-  ```
-* Download checkpoint and unzip it
-  ```
   cd data
   wget https://storage.googleapis.com/bert_models/2018_11_03/multilingual_L-12_H-768_A-12.zip
   unzip multilingual_L-12_H-768_A-12.zip
@@ -105,8 +102,8 @@ python -m tbert.cli.cmp_jsonl \
     /tmp/output-tf.jsonl
 ```
 
-Expect ouput similar to this:
+Expect output similar to this:
 ```
-Max float values delta: 4.199999999876525e-05
+Max float values delta: 3.6e-05
 Structure is identical
 ```
