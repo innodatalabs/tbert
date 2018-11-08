@@ -10,81 +10,81 @@ def read_tf_checkpoint(init_checkpoint):
     c = tf.train.load_checkpoint(init_checkpoint)
     return {
         name: c.get_tensor(name)
-        for name in tf_checkpoint.get_variable_to_shape_map().keys()
+        for name in c.get_variable_to_shape_map().keys()
     }
 
 EMBED_SPEC = {
     'token_embedding.weight' : {
-        'path': 'bert/embeddings/word_embeddings:0',
+        'path': 'bert/embeddings/word_embeddings',
     },
     'segment_embedding.weight' : {
-        'path': 'bert/embeddings/token_type_embeddings:0',
+        'path': 'bert/embeddings/token_type_embeddings',
     },
     'position_embedding' : {
-        'path': 'bert/embeddings/position_embeddings:0',
+        'path': 'bert/embeddings/position_embeddings',
     },
     'layer_norm.weight' : {
-        'path': 'bert/embeddings/LayerNorm/gamma:0',
+        'path': 'bert/embeddings/LayerNorm/gamma',
     },
     'layer_norm.bias' : {
-        'path': 'bert/embeddings/LayerNorm/beta:0',
+        'path': 'bert/embeddings/LayerNorm/beta',
     },
 }
 
 TRANSFORMER_SPEC = {
     'attention.query.weight' : {
-        'path': 'bert/encoder/layer_{L}/attention/self/query/kernel:0',
+        'path': 'bert/encoder/layer_{L}/attention/self/query/kernel',
         'transpose': True
     },
     'attention.query.bias' : {
-        'path': 'bert/encoder/layer_{L}/attention/self/query/bias:0'
+        'path': 'bert/encoder/layer_{L}/attention/self/query/bias'
     },
     'attention.key.weight' : {
-        'path': 'bert/encoder/layer_{L}/attention/self/key/kernel:0',
+        'path': 'bert/encoder/layer_{L}/attention/self/key/kernel',
         'transpose': True
     },
     'attention.key.bias' : {
-        'path': 'bert/encoder/layer_{L}/attention/self/key/bias:0'
+        'path': 'bert/encoder/layer_{L}/attention/self/key/bias'
     },
     'attention.value.weight' : {
-        'path': 'bert/encoder/layer_{L}/attention/self/value/kernel:0',
+        'path': 'bert/encoder/layer_{L}/attention/self/value/kernel',
         'transpose': True
     },
     'attention.value.bias' : {
-        'path': 'bert/encoder/layer_{L}/attention/self/value/bias:0'
+        'path': 'bert/encoder/layer_{L}/attention/self/value/bias'
     },
     'dense.weight' : {
-        'path': 'bert/encoder/layer_{L}/attention/output/dense/kernel:0',
+        'path': 'bert/encoder/layer_{L}/attention/output/dense/kernel',
         'transpose': True
     },
     'dense.bias' : {
-        'path': 'bert/encoder/layer_{L}/attention/output/dense/bias:0'
+        'path': 'bert/encoder/layer_{L}/attention/output/dense/bias'
     },
     'dense_layer_norm.weight' : {
-        'path': 'bert/encoder/layer_{L}/attention/output/LayerNorm/gamma:0'
+        'path': 'bert/encoder/layer_{L}/attention/output/LayerNorm/gamma'
     },
     'dense_layer_norm.bias' : {
-        'path': 'bert/encoder/layer_{L}/attention/output/LayerNorm/beta:0'
+        'path': 'bert/encoder/layer_{L}/attention/output/LayerNorm/beta'
     },
     'intermediate.weight' : {
-        'path': 'bert/encoder/layer_{L}/intermediate/dense/kernel:0',
+        'path': 'bert/encoder/layer_{L}/intermediate/dense/kernel',
         'transpose': True
     },
     'intermediate.bias' : {
-        'path': 'bert/encoder/layer_{L}/intermediate/dense/bias:0'
+        'path': 'bert/encoder/layer_{L}/intermediate/dense/bias'
     },
     'output.weight' : {
-        'path': 'bert/encoder/layer_{L}/output/dense/kernel:0',
+        'path': 'bert/encoder/layer_{L}/output/dense/kernel',
         'transpose': True
     },
     'output.bias' : {
-        'path': 'bert/encoder/layer_{L}/output/dense/bias:0'
+        'path': 'bert/encoder/layer_{L}/output/dense/bias'
     },
     'output_layer_norm.weight' : {
-        'path': 'bert/encoder/layer_{L}/output/LayerNorm/gamma:0'
+        'path': 'bert/encoder/layer_{L}/output/LayerNorm/gamma'
     },
     'output_layer_norm.bias' : {
-        'path': 'bert/encoder/layer_{L}/output/LayerNorm/beta:0'
+        'path': 'bert/encoder/layer_{L}/output/LayerNorm/beta'
     },
 }
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     )
 
     for layer in range(config['num_hidden_layers']):
-        bert.transformer[layer].load_state_dict(
+        bert.encoder[layer].load_state_dict(
             make_state_dict(bert_vars, TRANSFORMER_SPEC, L=layer)
         )
 

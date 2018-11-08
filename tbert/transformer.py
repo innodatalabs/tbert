@@ -3,7 +3,7 @@ from tbert.gelu import gelu
 from tbert.attention import Attention
 
 
-class Transformer(torch.nn.Module):
+class TransformerEncoder(torch.nn.Module):
 
     def __init__(self,
             hidden_size=768,
@@ -38,17 +38,17 @@ class Transformer(torch.nn.Module):
         self.output = torch.nn.Linear(intermediate_size, hidden_size)
         self.output_layer_norm = torch.nn.LayerNorm(hidden_size, eps=1.e-12)
 
-    def forward(self, inp, att_mask, batch_size=1):
+    def forward(self, inp, att_mask=None, batch_size=1):
         '''
         B - batch size
         S - sequence length
         H - hidden size
 
         inp - a float matrix with embedded input sequences, shape [B*S, H]
-        att_mask - an int tensor of shape [B, S, S] defining attention mask
+        att_mask - an int tensor of shape [B, 1, S, S] - the self-attention mask
         batch_size - batch size
 
-        Returns: a matrix of the same dims as inp (so that transformars are 
+        Returns: a matrix of the same dims as inp (so that transformers are
             stackable)
         '''
         # --> [B*S, H]

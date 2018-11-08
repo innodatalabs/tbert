@@ -1,6 +1,6 @@
 import torch
 from tbert.embedding import BertEmbedding
-from tbert.transformer import Transformer
+from tbert.transformer import TransformerEncoder
 
 
 class Bert(torch.nn.Module):
@@ -23,8 +23,8 @@ class Bert(torch.nn.Module):
             max_position_embeddings=config['max_position_embeddings']
         )
 
-        self.transformer = torch.nn.ModuleList([
-            Transformer(
+        self.encoder = torch.nn.ModuleList([
+            TransformerEncoder(
                 hidden_size=config['hidden_size'],
                 num_heads=config['num_attention_heads'],
                 intermediate_size=config['intermediate_size'],
@@ -51,7 +51,7 @@ class Bert(torch.nn.Module):
         y = y.view(-1, y.size(-1))
 
         outputs = []
-        for layer in self.transformer:
+        for layer in self.encoder:
             y = layer(y, att_mask, batch_size=B)
             outputs.append(y)
 

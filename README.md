@@ -49,7 +49,7 @@ Original TF BERT code is needed as we use it to do the tokenization.
   ```
 * Run the converter
   ```
-  python -t tbert.cli.convert \
+  python -m tbert.cli.convert \
     data/multilingual_L-12_H-768_A-12 \
     data/tbert-multilingual_L-12_H-768_A-12
   ```
