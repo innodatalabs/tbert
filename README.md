@@ -18,7 +18,7 @@ virtualenv .venv -p python3
 pip install tbert
 ```
 
-To run CLI utilities, original TF BERT code is required, as well as
+To run unit tests and CLI utilities, original TF BERT code is required, as well as
 TensorFlow library:
 
 ```
@@ -33,6 +33,13 @@ tbert.cli.convert --help
 ```
 
 Original TF BERT code is needed as we use it to do the tokenization.
+
+## Running unit tests
+
+```
+pip install pytest
+pytest tbert/test
+```
 
 ### Converting TF BERT pre-trained checkpoint to tBERT
 

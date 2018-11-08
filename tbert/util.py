@@ -73,15 +73,3 @@ def assign_params(module, vars, mapping, **fmt):
         set_param_value(module, param_name, t)
 
 
-def make_state_dict(vars, mapping, **fmt):
-
-    def make_tensor(item):
-        var = vars[item['path'].format(**fmt)]
-        if item.get('transpose'):
-            var = var.T
-        return torch.FloatTensor(var)
-
-    return {
-        name: make_tensor(item)
-        for name, item in mapping.items()
-    }
