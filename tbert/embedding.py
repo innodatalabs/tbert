@@ -7,7 +7,8 @@ class BertEmbedding(torch.nn.Module):
             token_vocab_size=105879,
             segment_vocab_size=2,
             hidden_size=768,
-            max_position_embeddings=512):
+            max_position_embeddings=512,
+            initializer_range=0.02):
         '''
         token_vocab_size - size of token (word pieces) vocabulary
         segment_vocab_size - number of segments (BERT uses 2 always, do not change)
@@ -18,8 +19,19 @@ class BertEmbedding(torch.nn.Module):
 
         self.token_embedding = torch.nn.Embedding(token_vocab_size, hidden_size, padding_idx=0)
         self.segment_embedding = torch.nn.Embedding(segment_vocab_size, hidden_size)
-        self.position_embedding = torch.nn.Parameter(data=torch.zeros(max_position_embeddings, hidden_size).float())
+        self.position_embedding = torch.nn.Parameter(
+            data=torch.zeros(
+                max_position_embeddings,
+                hidden_size,
+                dtype=torch.float32
+            )
+        )
         self.layer_norm = torch.nn.LayerNorm(hidden_size, eps=1.e-12)
+
+        # apply weight initialization
+        torch.nn.init.normal_(self.token_embedding.weight, std=initializer_range)
+        torch.nn.init.normal_(self.segment_embedding.weight, std=initializer_range)
+        torch.nn.init.normal_(self.position_embedding, std=initializer_range)
 
     def forward(self, input_ids, input_type_ids):
         '''

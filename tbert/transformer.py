@@ -1,6 +1,6 @@
 import torch
 from tbert.gelu import gelu
-from tbert.attention import Attention
+from tbert.attention import Attention, init_linear
 
 
 class TransformerEncoder(torch.nn.Module):
@@ -9,7 +9,8 @@ class TransformerEncoder(torch.nn.Module):
             hidden_size=768,
             num_heads=12,
             intermediate_size=3072,
-            dropout=0.1):
+            dropout=0.1,
+            initializer_range=0.02):
         '''
         hidden_size - hidden size, must be multiple of num_heads
         num_heads - number of attention heads.
@@ -28,7 +29,8 @@ class TransformerEncoder(torch.nn.Module):
             hidden_size,
             num_heads,
             hidden_size // num_heads,
-            dropout=dropout
+            dropout=dropout,
+            initializer_range=initializer_range
         )
 
         self.dense = torch.nn.Linear(hidden_size, hidden_size)
@@ -37,6 +39,10 @@ class TransformerEncoder(torch.nn.Module):
         self.intermediate = torch.nn.Linear(hidden_size, intermediate_size)
         self.output = torch.nn.Linear(intermediate_size, hidden_size)
         self.output_layer_norm = torch.nn.LayerNorm(hidden_size, eps=1.e-12)
+
+        init_linear(self.dense, initializer_range)
+        init_linear(self.intermediate, initializer_range)
+        init_linear(self.output, initializer_range)
 
     def forward(self, inp, att_mask=None, batch_size=1):
         '''

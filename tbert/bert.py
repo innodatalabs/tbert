@@ -20,7 +20,8 @@ class Bert(torch.nn.Module):
             token_vocab_size=config['vocab_size'],
             segment_vocab_size=config['type_vocab_size'],
             hidden_size=config['hidden_size'],
-            max_position_embeddings=config['max_position_embeddings']
+            max_position_embeddings=config['max_position_embeddings'],
+            initializer_range=config['initializer_range']
         )
 
         self.encoder = torch.nn.ModuleList([
@@ -28,7 +29,8 @@ class Bert(torch.nn.Module):
                 hidden_size=config['hidden_size'],
                 num_heads=config['num_attention_heads'],
                 intermediate_size=config['intermediate_size'],
-                dropout=dropout
+                dropout=dropout,
+                initializer_range=config['initializer_range']
             )
             for _ in range(config['num_hidden_layers'])
         ])

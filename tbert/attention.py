@@ -3,9 +3,21 @@ import torch.nn.functional as F
 import math
 
 
+def init_linear(m, initializer_range):
+    torch.nn.init.normal_(m.weight, std=initializer_range)
+    m.bias.data.zero_()
+
+
 class Attention(torch.nn.Module):
 
-    def __init__(self, query_size, key_size, num_heads, head_size, dropout=0.1):
+    def __init__(self,
+            query_size,
+            key_size,
+            num_heads,
+            head_size,
+            dropout=0.1,
+            initializer_range=0.02
+        ):
         torch.nn.Module.__init__(self)
 
         self.query_size = query_size
@@ -17,6 +29,10 @@ class Attention(torch.nn.Module):
         self.key   = torch.nn.Linear(key_size, key_size)
         self.value = torch.nn.Linear(key_size, key_size)
         self.dropout = torch.nn.Dropout(dropout)
+
+        init_linear(self.query, initializer_range)
+        init_linear(self.key, initializer_range)
+        init_linear(self.value, initializer_range)
 
     def forward(self, query, key, value, mask=None, batch_size=1):
         '''
