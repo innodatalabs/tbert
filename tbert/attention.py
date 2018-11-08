@@ -23,6 +23,8 @@ class Attention(torch.nn.Module):
         query [B*Q, N*H] - query sequence
         key   [B*K, N*H] - key sequence
         value [B*K, N*H] - value sequence
+        mask  [B, 1, Q, K] - attention mask (optional)
+        batch_size - the batch size (for attention reshaping)
 
         where:
         B - batch size

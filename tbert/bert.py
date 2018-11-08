@@ -42,8 +42,8 @@ class Bert(torch.nn.Module):
             input_type_ids = torch.zeros_like(input_ids)
 
         # credit to: https://github.com/huggingface/pytorch-pretrained-BERT/blob/master/modeling.py
-        attention_mask = input_mask.unsqueeze(1).unsqueeze(2)
-        attention_mask = (1.0 - attention_mask.float()) * -10000.0
+        att_mask = input_mask.unsqueeze(1).unsqueeze(2)
+        att_mask = (1.0 - att_mask.float()) * -10000.0
 
         y = self.embedding(input_ids, input_type_ids)
 
@@ -51,8 +51,8 @@ class Bert(torch.nn.Module):
         y = y.view(-1, y.size(-1))
 
         outputs = []
-        for layer in range(len(self.transformer)):
-            y = self.transformer[layer](y, attention_mask, batch_size=B)
+        for layer in self.transformer:
+            y = layer(y, att_mask, batch_size=B)
             outputs.append(y)
 
         return outputs

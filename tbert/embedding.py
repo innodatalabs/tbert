@@ -19,7 +19,7 @@ class BertEmbedding(torch.nn.Module):
         self.token_embedding = torch.nn.Embedding(token_vocab_size, hidden_size, padding_idx=0)
         self.segment_embedding = torch.nn.Embedding(segment_vocab_size, hidden_size)
         self.position_embedding = torch.nn.Parameter(data=torch.zeros(max_position_embeddings, hidden_size).float())
-        self.layer_norm = torch.nn.LayerNorm(hidden_size, eps=1.e-9)
+        self.layer_norm = torch.nn.LayerNorm(hidden_size, eps=1.e-12)
 
     def forward(self, input_ids, input_type_ids):
         '''
