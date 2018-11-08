@@ -13,26 +13,27 @@ See also alternative PyTorch port by guys from HuggingFace: https://github.com/h
 ## Installation
 
 ```
+git clone https://github.com/innodatalabs/tbert.git
+cd tbert
 virtualenv .venv -p python3
 . .venv/bin/activate
-pip install tbert
+pip install -r requirements.txt
 ```
 
-To run unit tests and CLI utilities, original TF BERT code is required, as well as
-TensorFlow library:
-
+To run unit tests and CLI utilities, original TF BERT code is required (we use it for tokenization):
 ```
-pip install tensorflow
 mkdir tf
 cd tf
 git clone https://github.com/google-research/bert
 cd ..
 export PYTHONPATH=.:tf/bert
+```
+
+Now all is set up:
+```
 python -m tbert.cli.extract_features --help
 python -m tbert.cli.convert --help
 ```
-
-Original TF BERT code is needed as we use it to do the tokenization.
 
 ## Running unit tests
 
