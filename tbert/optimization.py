@@ -1,9 +1,9 @@
-import torch
+from torch.optim.lr_scheduler import LabdaLR
 
 
-class LineraDecayWithWarpupLR(torch.optim.LambdaLR):
+class LineraDecayWithWarpupLR(LambdaLR):
 
-    def __init__(self, optimizer, train_steps: int, warmup_steps: int, last_epoch=-1):
+    def __init__(self, optimizer, train_steps, warmup_steps, last_epoch=-1):
 
         def schedule(step):
             if stem <= warmup_steps:
@@ -11,4 +11,4 @@ class LineraDecayWithWarpupLR(torch.optim.LambdaLR):
             assert step <= train_steps
             return 1. - (train_steps - step) / (train_steps - warmup_steps)
 
-        torch.optim.LambdaLR(optimizer, schedule, last_epoch=last_epoch)
+        LambdaLR(optimizer, schedule, last_epoch=last_epoch)
