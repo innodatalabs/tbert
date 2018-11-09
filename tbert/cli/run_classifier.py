@@ -247,20 +247,37 @@ if __name__ == '__main__':
         print('*** Training ***')
         classifier.train()
 
-        reader = repeating_reader(
-            -1, # repeat indefinetely
-            problem_reader,
-            args.data_dir,
-            label_vocab,
-            partition='train'
-        )
+        # reader = repeating_reader(
+        #     -1, # repeat indefinetely
+        #     problem_reader,
+        #     args.data_dir,
+        #     label_vocab,
+        #     partition='train'
+        # )
 
-        #reader = shuffler(reader, buffer_size=1000)
+        # reader = shuffler(reader, buffer_size=1000)
 
         reader = feats_reader(
-            reader,
+            problem_reader(args.data_dir, label_vocab, partition='train'),
             args.max_seq_length,
             tokenizer
+        )
+        samples = list(reader)
+        print('Read all samples:', len(samples))
+        all_input_ids      = torch.LongTensor([x['input_ids'] for x in samples])
+        all_input_type_ids = torch.LongTensor([x['input_type_ids'] for x in samples])
+        all_input_mask     = torch.LongTensor([x['input_mask'] for x in samples])
+        all_label_id       = torch.LongTensor([x['label_id'] for x in samples])
+
+        dataloader = data.DataLoader(
+            data.TensorDataset(
+                all_input_ids,
+                all_input_type_ids,
+                all_input_mask,
+                all_label_id
+            ),
+            shuffle=True,
+            batch_size=args.batch_size
         )
 
         opt = torch.optim.Adam(
@@ -277,27 +294,35 @@ if __name__ == '__main__':
         # )
 
         step = 0
-        for b in itertools.islice(
-                batcher(reader, batch_size=args.batch_size),
-                args.num_train_steps*args.macro_batch):
-            input_ids      = torch.LongTensor(b['input_ids']).to(device)
-            input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
-            input_mask     = torch.LongTensor(b['input_mask']).to(device)
-            label_id       = torch.LongTensor(b['label_id']).to(device)
+        for epoch in range(3):
+            for sample in dataloader:
+                sample = [x.to(device) for x in sample]
+                input_ids, input_type_ids, input_mask, label_id = sample
 
-            logits = classifier(input_ids, input_type_ids, input_mask)
-            log_probs = F.log_softmax(logits, dim=-1)
-            loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
-            loss.backward()
+        # for b in itertools.islice(
+        #         batcher(reader, batch_size=args.batch_size),
+        #         args.num_train_steps*args.macro_batch):
+        #     input_ids      = torch.LongTensor(b['input_ids']).to(device)
+        #     input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
+        #     input_mask     = torch.LongTensor(b['input_mask']).to(device)
+        #     label_id       = torch.LongTensor(b['label_id']).to(device)
 
-            step += 1
-            if step % args.macro_batch == 0:
-                opt.step()
-                # lr_schedule.step()
+        #     for g in b['guid']:
+        #         print(b)
 
-            if step % args.print_every == 0:
-                lrs = [p['lr'] for p in opt.param_groups]
-                print(f'Step: {step}, loss: {loss.item()}, learning rates: {lrs}')
+                logits = classifier(input_ids, input_type_ids, input_mask)
+                log_probs = F.log_softmax(logits, dim=-1)
+                loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
+                loss.backward()
+
+                step += 1
+                if step % args.macro_batch == 0:
+                    opt.step()
+                    # lr_schedule.step()
+
+                if step % args.print_every == 0:
+                    lrs = [p['lr'] for p in opt.param_groups]
+                    print(f'Step: {step}, loss: {loss.item()}, learning rates: {lrs}')
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
