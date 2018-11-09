@@ -2,6 +2,7 @@ import pickle
 import json
 import csv
 import torch
+from torch.utils import data
 import torch.nn.functional as F
 from tbert.data import example_to_feats
 from tbert.bert import BertPooler
@@ -235,21 +236,29 @@ if __name__ == '__main__':
     if args.do_train:
         classifier.train()
 
-        reader = repeating_reader(
-            args.num_train_epochs,
-            problem_reader,
-            args.data_dir,
-            label_vocab,
-            partition='train'
-        )
-
         reader = feats_reader(
-            reader,
+            problem_reader(args.data_dir, label_vocab, partition='train'),
             args.max_seq_length,
             tokenizer
         )
 
-        reader = shuffler(reader)
+        samples = list(reader)
+        print('Read all samples:', len(samples))
+        all_input_ids      = torch.LongTensor([x['input_ids'] for x in samples])
+        all_input_type_ids = torch.LongTensor([x['input_type_ids'] for x in samples])
+        all_input_mask     = torch.LongTensor([x['input_mask'] for x in samples])
+        all_label_id       = torch.LongTensor([x['label_id'] for x in samples])
+
+        dataloader = data.DataLoader(
+            data.TensorDataset(
+                all_input_ids,
+                all_input_type_ids,
+                all_input_mask,
+                all_label_id
+            ),
+            shuffle=True,
+            batch_size=args.batch_size
+        )
 
         opt = torch.optim.Adam(
             classifier.parameters(),
@@ -258,27 +267,26 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        batch_count = 0
-        for batch in batcher(reader, batch_size=args.batch_size):
-            input_ids      = torch.LongTensor(batch['input_ids']).to(device)
-            input_type_ids = torch.LongTensor(batch['input_type_ids']).to(device)
-            input_mask     = torch.LongTensor(batch['input_mask']).to(device)
-            label_id       = torch.LongTensor(batch['label_id']).to(device)
+        for epoch in range(3):
+            batch_count = 0
+            for sample in dataloader:
+                sample = [x.to(device) for x in sample]
+                input_ids, input_type_ids, input_mask, label_id = sample
 
-            if batch_count == 0:
-                opt.zero_grad()
+                if batch_count == 0:
+                    opt.zero_grad()
 
-            logits = classifier(input_ids, input_type_ids, input_mask)
-            log_probs = F.log_softmax(logits, dim=-1)
-            loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
-            print('loss:', loss.item())
-            loss.backward()
+                logits = classifier(input_ids, input_type_ids, input_mask)
+                log_probs = F.log_softmax(logits, dim=-1)
+                loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
+                print('loss:', loss.item())
+                loss.backward()
 
-            batch_count += 1
-            if batch_count >= args.macro_batch:
-                batch_count = 0
-                opt.step()
-                break  # FIXME
+                batch_count += 1
+                if batch_count >= args.macro_batch:
+                    batch_count = 0
+                    opt.step()
+                    break  # FIXME
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
