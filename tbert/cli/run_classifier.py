@@ -9,7 +9,7 @@ from tbert.data import example_to_feats
 from tbert.bert import BertPooler
 from tbert.attention import init_linear
 from tbert.data import repeating_reader, batcher, shuffler
-from tbert.optimization import LineraDecayWithWarpupLR
+from tbert.optimization import LinearDecayWithWarpupLR
 import tokenization
 
 
