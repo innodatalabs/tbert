@@ -221,13 +221,18 @@ if __name__ == '__main__':
     if config['max_position_embeddings'] < args.max_seq_length:
         raise ValueError('max_seq_length parameter can not exceed config["max_position_embeddings"]')
 
+    print('Loading vocabulary...')
     tokenizer = tokenization.FullTokenizer(
         vocab_file=inp('vocab.txt'),
         do_lower_case=args.do_lower_case,
     )
+    print('Done loading vocabulary.')
 
     classifier = BertClassifier(config, len(label_vocab))
+    print('Loading pre-trained weights...')
     classifier.load_pretrained(args.pretrained_dir)
+    print('Done loading pre-trained weights.')
+
     device = torch.device('cpu')
     if torch.cuda.is_available():
         device = torch.device('cuda')
