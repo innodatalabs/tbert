@@ -9,6 +9,6 @@ class LinearDecayWithWarpupLR(LambdaLR):
             if step <= warmup_steps:
                 return step / warmup_steps
             assert step <= train_steps
-            return 1. - (train_steps - step) / (train_steps - warmup_steps)
+            return (train_steps - step) / (train_steps - warmup_steps)
 
         LambdaLR.__init__(self, optimizer, schedule, last_epoch=last_epoch)
