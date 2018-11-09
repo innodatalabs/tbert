@@ -255,7 +255,7 @@ if __name__ == '__main__':
             partition='train'
         )
 
-        reader = shuffler(reader, buffer_size=1000)
+        #reader = shuffler(reader, buffer_size=1000)
 
         reader = feats_reader(
             reader,
