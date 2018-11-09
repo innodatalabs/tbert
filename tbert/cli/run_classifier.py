@@ -8,6 +8,7 @@ from tbert.data import example_to_feats
 from tbert.bert import BertPooler
 from tbert.attention import init_linear
 from tbert.data import repeating_reader, batcher, shuffler
+from tbert.optimization import LineraDecayWithWarpupLR
 import tokenization
 
 
@@ -199,8 +200,9 @@ if __name__ == '__main__':
     parser.add_argument('--do_predict', action='store_true', help='Set this flag to run prediction')
 
     parser.add_argument('--learning_rate', default=2.e-5, help='Learning rate for training, default %(default)s')
-    parser.add_argument('--num_train_epochs', default=3, help='Number of epochs to train, default %(default)s')
+    parser.add_argument('--num_train_steps', default=1000, help='Number of training steps, default %(default)s')
     parser.add_argument('--macro_batch', default=1, help='Number of batches to accumulate gradiends before optimizer does the update, default %(default)s')
+    parser.add_argument('--print_every', default=10, help='How often to print training stats, default %(default)s')
 
     args = parser.parse_args()
 
@@ -243,28 +245,20 @@ if __name__ == '__main__':
         print('*** Training ***')
         classifier.train()
 
-        reader = feats_reader(
-            problem_reader(args.data_dir, label_vocab, partition='train'),
-            args.max_seq_length,
-            tokenizer
+        reader = repeating_reader(
+            -1,
+            problem_reader,
+            args.data_dir,
+            label_vocab,
+            partition='train'
         )
 
-        samples = list(reader)
-        print('Read all samples:', len(samples))
-        all_input_ids      = torch.LongTensor([x['input_ids'] for x in samples])
-        all_input_type_ids = torch.LongTensor([x['input_type_ids'] for x in samples])
-        all_input_mask     = torch.LongTensor([x['input_mask'] for x in samples])
-        all_label_id       = torch.LongTensor([x['label_id'] for x in samples])
+        reader = shuffler(reader, buffer_size=1000)
 
-        dataloader = data.DataLoader(
-            data.TensorDataset(
-                all_input_ids,
-                all_input_type_ids,
-                all_input_mask,
-                all_label_id
-            ),
-            shuffle=True,
-            batch_size=args.batch_size
+        reader = feats_reader(
+            reader,
+            args.max_seq_length,
+            tokenizer
         )
 
         opt = torch.optim.Adam(
@@ -274,25 +268,32 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        for epoch in range(args.num_train_epochs):
-            batch_count = 0
-            for sample in dataloader:
-                sample = [x.to(device) for x in sample]
-                input_ids, input_type_ids, input_mask, label_id = sample
+        lr_schedule = LineraDecayWithWarpupLR(
+            opt,
+            args.train_steps,
+            args.warpum_steps
+        )
 
-                if batch_count == 0:
-                    opt.zero_grad()
+        step = 0
+        for b in itertools.islice(0, args.num_train_steps*args.macro_batch,
+                batcher(reader, batch_size=args.batch_size)):
+            input_ids      = torch.LongTensor(b['input_ids']).to(device)
+            input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
+            input_mask     = torch.LongTensor(b['input_mask']).to(device)
+            label_id       = torch.LongTensor(b['label_id']).to(device)
 
-                logits = classifier(input_ids, input_type_ids, input_mask)
-                log_probs = F.log_softmax(logits, dim=-1)
-                loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
-                loss.backward()
+            logits = classifier(input_ids, input_type_ids, input_mask)
+            log_probs = F.log_softmax(logits, dim=-1)
+            loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
+            loss.backward()
 
-                batch_count += 1
-                if batch_count >= args.macro_batch:
-                    batch_count = 0
-                    opt.step()
-            print(f'epoch {epoch} done')
+            step += 1
+            if step % args.macro_batch == 0:
+                opt.step()
+                lr_schedule.step()
+
+            if step % args.print_every == 0:
+                print(f'Step: {step}, loss: {loss.item()}')
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
