@@ -244,6 +244,8 @@ python run_classifier.py \
 
     classifier = BertClassifier(config, len(label_vocab))
     classifier.load_pretrained(args.pretrained_dir)
+    if torch.cuda.is_available():
+        classifier.cuda()
 
     if args.do_train:
         classifier.train()
