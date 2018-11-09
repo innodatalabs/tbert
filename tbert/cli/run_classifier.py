@@ -298,7 +298,7 @@ if __name__ == '__main__':
 
             if step % args.print_every == 0:
                 lrs = [p['lr'] for p in opt.param_groups]
-                print(f'Step: {step}, loss: {loss.item()}, learning rates: {lrs}')
+                print(f'Step: {step:>10}, loss: {loss.item():2.6}, learning rates: {lrs}')
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
