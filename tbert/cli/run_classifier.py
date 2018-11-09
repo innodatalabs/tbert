@@ -229,9 +229,10 @@ if __name__ == '__main__':
     print('Done loading vocabulary.')
 
     classifier = BertClassifier(config, len(label_vocab))
-    print('Loading pre-trained weights...')
-    classifier.load_pretrained(args.pretrained_dir)
-    print('Done loading pre-trained weights.')
+    if args.do_train:
+        print('Loading pre-trained weights...')
+        classifier.load_pretrained(args.pretrained_dir)
+        print('Done loading pre-trained weights.')
 
     device = torch.device('cpu')
     if torch.cuda.is_available():
@@ -239,6 +240,7 @@ if __name__ == '__main__':
     classifier.to(device)
 
     if args.do_train:
+        print('*** Training ***')
         classifier.train()
 
         reader = feats_reader(
@@ -272,7 +274,7 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        for epoch in range(3):
+        for epoch in range(args.num_training_epochs):
             batch_count = 0
             for sample in dataloader:
                 sample = [x.to(device) for x in sample]
@@ -291,14 +293,17 @@ if __name__ == '__main__':
                 if batch_count >= args.macro_batch:
                     batch_count = 0
                     opt.step()
+            print(f'epoch {epoch} done')
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
             pickle.dump(classifier.state_dict(), f)
+            print('Saved trained model')
     else:
         # load trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'rb') as f:
             classifier.load_state_dict(pickle.load(f))
+        print('Loaded checkpoint')
 
     if args.do_eval:
         classifier.eval()
