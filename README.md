@@ -12,7 +12,7 @@ See also alternative PyTorch port by guys from HuggingFace: https://github.com/h
 
 ## Installation
 
-Python3 is required.
+Python 3.6 or better is required.
 
 ```
 git clone https://github.com/innodatalabs/tbert.git
