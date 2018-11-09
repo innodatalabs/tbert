@@ -319,6 +319,7 @@ if __name__ == '__main__':
                 if step % args.macro_batch == 0:
                     opt.step()
                     # lr_schedule.step()
+                    opt.zero_grad()
 
                 if step % args.print_every == 0:
                     lrs = [p['lr'] for p in opt.param_groups]
