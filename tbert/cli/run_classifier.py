@@ -277,8 +277,9 @@ if __name__ == '__main__':
         )
 
         step = 0
-        for b in itertools.islice(0, args.num_train_steps*args.macro_batch,
-                batcher(reader, batch_size=args.batch_size)):
+        for b in itertools.islice(
+                batcher(reader, batch_size=args.batch_size),
+                args.num_train_steps*args.macro_batch)):
             input_ids      = torch.LongTensor(b['input_ids']).to(device)
             input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
             input_mask     = torch.LongTensor(b['input_mask']).to(device)
