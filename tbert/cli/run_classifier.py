@@ -244,8 +244,10 @@ python run_classifier.py \
 
     classifier = BertClassifier(config, len(label_vocab))
     classifier.load_pretrained(args.pretrained_dir)
+    device = torch.device('cpu')
     if torch.cuda.is_available():
-        classifier.cuda()
+        device = torch.device('cuda')
+    classifier.to(device)
 
     if args.do_train:
         classifier.train()
@@ -275,10 +277,10 @@ python run_classifier.py \
 
         batch_count = 0
         for batch in batcher(reader, batch_size=args.batch_size):
-            input_ids      = torch.LongTensor(batch['input_ids'])
-            input_type_ids = torch.LongTensor(batch['input_type_ids'])
-            input_mask     = torch.LongTensor(batch['input_mask'])
-            label_id       = torch.LongTensor(batch['label_id'])
+            input_ids      = torch.LongTensor(batch['input_ids']).to(device)
+            input_type_ids = torch.LongTensor(batch['input_type_ids']).to(device)
+            input_mask     = torch.LongTensor(batch['input_mask']).to(device)
+            label_id       = torch.LongTensor(batch['label_id']).to(device)
 
             if batch_count == 0:
                 opt.zero_grad()
@@ -307,10 +309,10 @@ python run_classifier.py \
         total_samples = 0
         ttoal_hits = 0
         for b in batcher(reader, batch_size=args.batch_size):
-            input_ids      = torch.LongTensor(b['input_ids'])
-            input_type_ids = torch.LongTensor(b['input_type_ids'])
-            input_mask     = torch.LongTensor(b['input_mask'])
-            label_id       = torch.LongTensor(b['label_id'])
+            input_ids      = torch.LongTensor(b['input_ids']).to(device)
+            input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
+            input_mask     = torch.LongTensor(b['input_mask']).to(device)
+            label_id       = torch.LongTensor(b['label_id']).to(device)
 
             logits = classifier(input_ids, input_type_ids, input_mask)
             loss = F.nll_loss(logits, label_id, reduction='sum').item()
@@ -336,9 +338,9 @@ python run_classifier.py \
 
         with open(args.output_dir + '/test_results.tsv', 'w') as f:
             for b in batcher(reader, batch_size=args.eval_batch_size):
-                input_ids      = torch.LongTensor(b['input_ids'])
-                input_type_ids = torch.LongTensor(b['input_type_ids'])
-                input_mask     = torch.LongTensor(b['input_mask'])
+                input_ids      = torch.LongTensor(b['input_ids']).to(device)
+                input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
+                input_mask     = torch.LongTensor(b['input_mask']).to(device)
 
                 logits = classifier(input_ids, input_type_ids, input_mask)
                 prob = F.softmax(logits, dim=-1)
