@@ -305,6 +305,7 @@ if __name__ == '__main__':
         print('Loaded checkpoint')
 
     if args.do_eval:
+        print('*** Evaluating ***')
         classifier.eval()
 
         reader = feats_reader(
@@ -337,6 +338,7 @@ if __name__ == '__main__':
         print('Accuracy:', total_hits / total_samples)
 
     if args.do_predict:
+        print('*** Predicting ***')
         classifier.eval()
 
         reader = feats_reader(
