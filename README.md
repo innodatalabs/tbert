@@ -110,3 +110,37 @@ Expect output similar to this:
 Max float values delta: 3.6e-05
 Structure is identical
 ```
+
+## Fine-tuning a classifier
+
+Download GLUE datasets, as explained here. In the following we assume that
+GLUE dataset are in the `glue_data` directory.
+
+To train MRPC task, do this:
+```
+python -m tbert.cli.run_classifier \
+    data/tbert-multilingual_L-12_H-768_A-12 \
+    /tmp \
+    --problem mrpc \
+    --data_dir glue_data/MRPC \
+    --do_train \
+    --num_train_steps 600 \
+    --num_warmup_steps 60 \
+    --do_eval
+```
+
+Expect to see something similar to that:
+```
+...
+Step:        550, loss:  0.039, learning rates: 1.888888888888889e-06
+Step:        560, loss:  0.014, learning rates: 1.5185185185185186e-06
+Step:        570, loss:  0.017, learning rates: 1.1481481481481482e-06
+Step:        580, loss:  0.021, learning rates: 7.777777777777779e-07
+Step:        590, loss:  0.053, learning rates: 4.074074074074075e-07
+Step:        600, loss:  0.061, learning rates: 3.703703703703704e-08
+Saved trained model
+*** Evaluating ***
+Number of samples evaluated: 408
+Average per-sample loss: 0.4922609218195373
+Accuracy: 0.8504901960784313
+```
