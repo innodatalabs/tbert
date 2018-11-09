@@ -248,7 +248,7 @@ if __name__ == '__main__':
         classifier.train()
 
         reader = repeating_reader(
-            -1,
+            -1, # repeat indefinetely
             problem_reader,
             args.data_dir,
             label_vocab,

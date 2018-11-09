@@ -147,7 +147,7 @@ def shuffler(stream, buffer_size=100000):
         if len(buffer) >= buffer_size:
             random.shuffle(buffer)
             yield from buffer[len(buffer)//2:]
-            buffer = buffer[len(buffer)//2:]
+            buffer = buffer[:len(buffer)//2]
         buffer.append(sample)
 
     random.shuffle(buffer)
