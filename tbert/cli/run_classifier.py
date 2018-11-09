@@ -1,6 +1,7 @@
 import pickle
 import json
 import csv
+import itertools
 import torch
 from torch.utils import data
 import torch.nn.functional as F
@@ -294,7 +295,8 @@ if __name__ == '__main__':
                 lr_schedule.step()
 
             if step % args.print_every == 0:
-                print(f'Step: {step}, loss: {loss.item()}')
+                lrs = [p['lr'] for p in opt.param_groups]
+                print(f'Step: {step}, loss: {loss.item()}, learning rates: {lrs}')
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
