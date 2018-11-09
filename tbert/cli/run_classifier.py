@@ -286,7 +286,6 @@ if __name__ == '__main__':
                 logits = classifier(input_ids, input_type_ids, input_mask)
                 log_probs = F.log_softmax(logits, dim=-1)
                 loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
-                print('loss:', loss.item())
                 loss.backward()
 
                 batch_count += 1
