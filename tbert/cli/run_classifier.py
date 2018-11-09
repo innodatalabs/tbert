@@ -180,30 +180,13 @@ def feats_reader(reader, seq_length, tokenizer):
 
 
 if __name__ == '__main__':
-    '''
-export GLUE_DIR=/path/to/glue
-
-python run_classifier.py \
-  --task_name MRPC \
-  --do_train \
-  --do_eval \
-  --do_lower_case \
-  --data_dir $GLUE_DIR/MRPC/ \
-  --vocab_file $BERT_BASE_DIR/vocab.txt \
-  --bert_config_file $BERT_BASE_DIR/bert_config.json \
-  --load_checkpoint $BERT_PYTORCH_DIR/pytorch_model.bin \
-  --max_seq_length 128 \
-  --train_batch_size 32 \
-  --learning_rate 2e-5 \
-  --num_train_epochs 3.0 \
-  --output_dir /tmp/mrpc_output/
-    '''
     import argparse
     from tbert.bert import Bert
 
     parser = argparse.ArgumentParser(description='Reads text file and extracts BERT features for each sample')
 
     parser.add_argument('pretrained_dir', help='Directory with pretrained tBERT checkpoint')
+    parser.add_argument('output_dir', help='Where to save trained model (and were to load from for evaluation/prediction)')
     parser.add_argument('--batch_size', default=32, help='Batch size, default %(default)s')
     parser.add_argument('--max_seq_length', default=128, help='Sequence size limit (after tokenization), default is %(default)s')
     parser.add_argument('--do_lower_case', default=True, help='Set to false to retain case-sensitive information, default %(default)s')
@@ -225,7 +208,7 @@ python run_classifier.py \
         label: i
         for i, label in enumerate(problem['labels'])
     }
-    reader = problem['reader']
+    problem_reader = problem['reader']
 
     inp = lambda s: f'{args.pretrained_dir}/{s}'
     out = lambda s: f'{args.output_dir}/{s}'
@@ -254,7 +237,7 @@ python run_classifier.py \
 
         reader = repeating_reader(
             args.num_train_epochs,
-            reader,
+            problem_reader,
             args.data_dir,
             label_vocab,
             partition='train'
@@ -295,19 +278,28 @@ python run_classifier.py \
             if batch_count >= args.macro_batch:
                 batch_count = 0
                 opt.step()
+                break  # FIXME
+
+        # save trained
+        with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
+            pickle.dump(classifier.state_dict(), f)
+    else:
+        # load trained
+        with open(f'{args.output_dir}/bert_classifier.pickle', 'rb') as f:
+            classifier.load_state_dict(pickle.load(f))
 
     if args.do_eval:
         classifier.eval()
 
         reader = feats_reader(
-            problem.reader(args.data_dir, label_vocab, partition='dev'),
+            problem_reader(args.data_dir, label_vocab, partition='dev'),
             args.max_seq_length,
             tokenizer
         )
 
         total_loss = 0.
         total_samples = 0
-        ttoal_hits = 0
+        total_hits = 0
         for b in batcher(reader, batch_size=args.batch_size):
             input_ids      = torch.LongTensor(b['input_ids']).to(device)
             input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
@@ -318,6 +310,7 @@ python run_classifier.py \
             loss = F.nll_loss(logits, label_id, reduction='sum').item()
             prediction = torch.argmax(logits, dim=-1)
             hits = (label_id == prediction).sum().item()
+            print(loss, hits)
 
             total_loss += loss
             total_hits += hits
@@ -331,20 +324,20 @@ python run_classifier.py \
         classifier.eval()
 
         reader = feats_reader(
-            problem.reader(args.data_dir, label_vocab, partition='test'),
+            problem_reader(args.data_dir, label_vocab, partition='test'),
             args.max_seq_length,
             tokenizer
         )
 
-        with open(args.output_dir + '/test_results.tsv', 'w') as f:
-            for b in batcher(reader, batch_size=args.eval_batch_size):
+        with open(f'{args.output_dir}/test_results.tsv', 'w') as f:
+            for b in batcher(reader, batch_size=args.batch_size):
                 input_ids      = torch.LongTensor(b['input_ids']).to(device)
                 input_type_ids = torch.LongTensor(b['input_type_ids']).to(device)
                 input_mask     = torch.LongTensor(b['input_mask']).to(device)
 
                 logits = classifier(input_ids, input_type_ids, input_mask)
                 prob = F.softmax(logits, dim=-1)
-                for i in range(prob.shape(0)):
-                    f.write('\t'.join(str(p) for p in prob[i].to_list()) + '\n')
+                for i in range(prob.size(0)):
+                    f.write('\t'.join(str(p) for p in prob[i].tolist()) + '\n')
 
     print('All done')

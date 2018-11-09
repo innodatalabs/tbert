@@ -13,3 +13,5 @@ tf/
 obsolete/
 download_glue_data.py
 glue_data/
+*.pickle
+*.tsv
