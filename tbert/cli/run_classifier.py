@@ -349,4 +349,3 @@ if __name__ == '__main__':
                     f.write('\t'.join(str(p) for p in prob[i].tolist()) + '\n')
 
     print('All done')
-pytorch-pretrained-BERT
