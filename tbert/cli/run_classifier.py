@@ -270,7 +270,7 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        lr_schedule = LineraDecayWithWarpupLR(
+        lr_schedule = LinearDecayWithWarpupLR(
             opt,
             args.num_train_steps,
             args.num_warmup_steps
