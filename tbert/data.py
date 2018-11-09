@@ -3,6 +3,7 @@ Heavily borrows from the original TF BERT code:
     https://github.com/google-research/bert
 '''
 import re
+import collections
 import torch
 
 
@@ -102,3 +103,33 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
         else:
             tokens_b.pop()
 
+
+def group(sequence, batch_size=32, allow_incomplete=True):
+    '''Groups input stream into batches of at most batch_size'''
+    buffer = []
+    for s in sequence:
+        buffer.append(s)
+        if len(buffer) >= batch_size:
+            yield buffer[:]
+            buffer.clear()
+
+    if len(buffer) > 0 and allow_incomplete:
+        yield buffer
+
+
+def batch(sequence, batch_size=32, allow_incomplete=True):
+    '''Batches input sequence of features'''
+
+    def shape_batch(batch):
+        out = collections.defaultdict(list)
+        for seq in batch:
+            for key, val in seq.items():
+                out[key].append(val)
+        return dict(out)
+
+    for batch in group(
+            sequence,
+            batch_size=batch_size,
+            allow_incomplete=allow_incomplete
+        ):
+        yield shape_batch(batch)

@@ -1,7 +1,7 @@
 import json
 import pickle
 import collections
-from tbert.data import parse_example, example_to_feats
+from tbert.data import parse_example, example_to_feats, batch
 import tokenization  # from original BERT repo
 import torch
 
@@ -22,50 +22,26 @@ def read_examples(filename, max_seq_len, tokenizer):
             yield feats
 
 
-def batch(sequence, batch_size=32):
-    '''Splits input stream into batches of at most batch_size'''
-    buffer = []
-    for s in sequence:
-        buffer.append(s)
-        if len(buffer) >= batch_size:
-            yield buffer[:]
-            buffer.clear()
-
-    if len(buffer) > 0:
-        yield buffer
-
-
-def shape_batch(feats_batch):
-    '''Builds tensors from batches features'''
-    seq_len = max(len(seq['input_ids']) for seq in feats_batch)
-    input_ids = torch.zeros(len(feats_batch), seq_len, dtype=torch.int64)
-    input_type_ids = torch.zeros(len(feats_batch), seq_len, dtype=torch.int64)
-    input_mask = torch.zeros(len(feats_batch), seq_len, dtype=torch.int64)
-    for i, seq in enumerate(feats_batch):
-        for j in range(len(seq['input_ids'])):
-            input_ids[i][j] = seq['input_ids'][j]
-            input_type_ids[i][j] = seq['input_type_ids'][j]
-            input_mask[i][j] = seq['input_mask'][j]
-    return input_ids, input_type_ids, input_mask
-
-
 def predict_json_features(bert, examples, batch_size=32, layer_indexes=None):
     '''Runs BERT model on examples and creates JSON output object for each'''
     if layer_indexes is None:
         layer_indexes = [-1, -2, -3, -4]
 
     unique_id = 0
-    for feats_batch in batch(examples, batch_size=batch_size):
-        input_ids, input_type_ids, input_mask = shape_batch(feats_batch)
+    for b in batch(examples, batch_size=batch_size):
+        input_ids      = torch.LongTensor(b['input_ids'])
+        input_type_ids = torch.LongTensor(b['input_type_ids'])
+        input_mask     = torch.LongTensor(b['input_mask'])
 
         out = bert(input_ids, input_type_ids, input_mask)
-        for idx, feats in enumerate(feats_batch):
+        num_items_in_batch = input_ids.size(0)
+        for idx in range(num_items_in_batch):
             all_features = []
             output_json = collections.OrderedDict([
                 ('linex_index', unique_id),
                 ('features', all_features),
             ])
-            tokens = feats['tokens']
+            tokens = b['tokens'][idx]
             for i, tk in enumerate(tokens):
                 all_layers = []
                 all_features.append(collections.OrderedDict([
@@ -74,7 +50,7 @@ def predict_json_features(bert, examples, batch_size=32, layer_indexes=None):
                 ]))
                 for j, layer_index in enumerate(layer_indexes):
                     layer_output = out[layer_index]
-                    layer_output = layer_output.view(len(feats_batch), -1, layer_output.size(-1))
+                    layer_output = layer_output.view(num_items_in_batch, -1, layer_output.size(-1))
                     values = [round(float(x), 6) for x in layer_output[idx, i, :]]
                     all_layers.append(collections.OrderedDict([
                         ('index', layer_index),

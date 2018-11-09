@@ -11,3 +11,5 @@ err
 data/
 tf/
 obsolete/
+download_glue_data.py
+glue_data/
