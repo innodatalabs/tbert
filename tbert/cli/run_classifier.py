@@ -270,11 +270,11 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        lr_schedule = LinearDecayWithWarpupLR(
-            opt,
-            args.num_train_steps,
-            args.num_warmup_steps
-        )
+        # lr_schedule = LinearDecayWithWarpupLR(
+        #     opt,
+        #     args.num_train_steps,
+        #     args.num_warmup_steps
+        # )
 
         step = 0
         for b in itertools.islice(
@@ -293,7 +293,7 @@ if __name__ == '__main__':
             step += 1
             if step % args.macro_batch == 0:
                 opt.step()
-                lr_schedule.step()
+                # lr_schedule.step()
 
             if step % args.print_every == 0:
                 lrs = [p['lr'] for p in opt.param_groups]
