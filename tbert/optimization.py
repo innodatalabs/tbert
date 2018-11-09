@@ -1,4 +1,4 @@
-from torch.optim.lr_scheduler import LabdaLR
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class LineraDecayWithWarpupLR(LambdaLR):
