@@ -286,7 +286,6 @@ if __name__ == '__main__':
                 if batch_count >= args.macro_batch:
                     batch_count = 0
                     opt.step()
-                    break  # FIXME
 
         # save trained
         with open(f'{args.output_dir}/bert_classifier.pickle', 'wb') as f:
@@ -315,8 +314,9 @@ if __name__ == '__main__':
             label_id       = torch.LongTensor(b['label_id']).to(device)
 
             logits = classifier(input_ids, input_type_ids, input_mask)
-            loss = F.nll_loss(logits, label_id, reduction='sum').item()
-            prediction = torch.argmax(logits, dim=-1)
+            log_probs = F.log_softmax(logits, dim=-1)
+            loss = F.nll_loss(log_probs, label_id, reduction='sum').item()
+            prediction = torch.argmax(log_probs, dim=-1)
             hits = (label_id == prediction).sum().item()
             print(loss, hits)
 
@@ -349,3 +349,4 @@ if __name__ == '__main__':
                     f.write('\t'.join(str(p) for p in prob[i].tolist()) + '\n')
 
     print('All done')
+pytorch-pretrained-BERT
