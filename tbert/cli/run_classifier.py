@@ -274,7 +274,7 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        for epoch in range(args.num_training_epochs):
+        for epoch in range(args.num_train_epochs):
             batch_count = 0
             for sample in dataloader:
                 sample = [x.to(device) for x in sample]
