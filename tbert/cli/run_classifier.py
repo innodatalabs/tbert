@@ -318,7 +318,6 @@ if __name__ == '__main__':
             loss = F.nll_loss(log_probs, label_id, reduction='sum').item()
             prediction = torch.argmax(log_probs, dim=-1)
             hits = (label_id == prediction).sum().item()
-            print(loss, hits)
 
             total_loss += loss
             total_hits += hits
@@ -326,7 +325,7 @@ if __name__ == '__main__':
 
         print('Number of samples evaluated:', total_samples)
         print('Average per-sample loss:', total_loss / total_samples)
-        print('Accuracy:', hits / total_samples)
+        print('Accuracy:', total_hits / total_samples)
 
     if args.do_predict:
         classifier.eval()
