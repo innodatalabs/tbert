@@ -297,7 +297,7 @@ if __name__ == '__main__':
                 opt.zero_grad()
 
             if step % args.print_every == 0:
-                lrs = [p['lr'] for p in opt.param_groups]
+                lrs = [p['lr'] for p in opt.param_groups][0]
                 print(f'Step: {step:>10}, loss: {loss.item():6.2}, learning rates: {lrs:8}')
 
         # save trained
