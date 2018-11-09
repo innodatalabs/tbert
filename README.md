@@ -113,7 +113,9 @@ Structure is identical
 
 ## Fine-tuning a classifier
 
-Download GLUE datasets, as explained here. In the following we assume that
+Download GLUE datasets, as explained
+[here](https://github.com/google-research/bert#sentence-and-sentence-pair-classification-tasks).
+In the following we assume that
 GLUE dataset are in the `glue_data` directory.
 
 To train MRPC task, do this:
