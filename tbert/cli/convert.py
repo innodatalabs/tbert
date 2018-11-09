@@ -1,6 +1,6 @@
 import json
-from tbert.tf_util import read_tf_checkpoint, make_bert_state_dict
-from tbert.bert import Bert
+from tbert.tf_util import read_tf_checkpoint, make_bert_pooler_state_dict
+from tbert.bert import BertPooler
 import modeling
 import tensorflow as tf
 
@@ -34,12 +34,15 @@ if __name__ == '__main__':
 
     bert_vars = read_tf_checkpoint(src('bert_model.ckpt'))
 
-    bert = Bert(config)
-    bert.load_state_dict(
-        make_bert_state_dict(bert_vars, config['num_hidden_layers'])
+    bert_pooler = BertPooler(config)
+    bert_pooler.load_state_dict(
+        make_bert_pooler_state_dict(bert_vars, config['num_hidden_layers'])
     )
 
     with open(trg('bert_model.pickle'), 'wb') as f:
-        pickle.dump(bert.state_dict(), f)
+        pickle.dump(bert_pooler.bert.state_dict(), f)
+
+    with open(trg('pooler_model.pickle'), 'wb') as f:
+        pickle.dump(bert_pooler.pooler.state_dict(), f)
 
     print('Sucessfully created tBERT model in', args.output_dir)

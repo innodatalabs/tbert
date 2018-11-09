@@ -7,7 +7,7 @@ import tensorflow as tf
 import modeling
 import torch
 import numpy as np
-from tbert.bert import Bert
+from tbert.bert import Bert, BertPooler
 
 
 def read_tf_checkpoint(init_checkpoint):
@@ -126,6 +126,17 @@ ENCODER_SPEC = {
 }
 
 
+POOLER_SPEC = {
+    'weight' : {
+        'path': 'bert/pooler/dense/kernel',
+        'transpose': True
+    },
+    'bias' : {
+        'path': 'bert/pooler/dense/bias'
+    },
+}
+
+
 def make_bert_state_dict(vvars, num_hidden_layers=12):
     '''Creates tBERT *state dict* from TF BERT parameters'''
 
@@ -142,6 +153,23 @@ def make_bert_state_dict(vvars, num_hidden_layers=12):
             f'encoder.{layer}.{name}': array
             for name, array in layer_state.items()
         })
+
+    return state_dict
+
+
+def make_bert_pooler_state_dict(vvars, num_hidden_layers=12):
+    '''Creates tBERT *state dict* from TF BERT parameters'''
+    state_dict = {}
+
+    state_dict.update({
+        f'bert.{name}': array
+        for name, array in make_bert_state_dict(vvars, num_hidden_layers).items()
+    })
+
+    state_dict.update({
+        f'pooler.{name}': array
+        for name, array in make_state_dict(vvars, POOLER_SPEC).items()
+    })
 
     return state_dict
 
@@ -240,14 +268,15 @@ def run_tf_bert_once(config, params, input_ids, input_type_ids=None, input_mask=
             to_eval.append(
                 sess.graph.get_tensor_by_name(f'bert/encoder/Reshape_{reshape_id}:0')
             )
+        pooler_output = sess.graph.get_tensor_by_name('bert/pooler/dense/Tanh:0')
 
-        out = sess.run(to_eval, feed_dict={
+        out, pout = sess.run((to_eval, pooler_output), feed_dict={
             pinput_ids: input_ids,
             pinput_type_ids: input_type_ids,
             pinput_mask: input_mask
         })
 
-        return out
+        return out, pout
 
 def get_tf_bert_init_params(config):
     '''Created TF BERT model from config and params, and runs it on the provided inputs
@@ -297,3 +326,24 @@ def run_tbert_once(config, params, input_ids, input_type_ids, input_mask):
         )
 
     return [v.data.numpy() for v in out]
+
+
+def run_tbert_pooler_once(config, params, input_ids, input_type_ids, input_mask):
+    '''Runs tBERT model using TF parameters'''
+
+    # init tBERT model
+    state_dict = make_bert_pooler_state_dict(params, config['num_hidden_layers'])
+
+    classifier = BertPooler(config)
+    classifier.load_state_dict(state_dict)
+
+    # run tBERT on the same input
+    classifier.eval()
+    with torch.no_grad():
+        out = classifier(
+            torch.LongTensor(input_ids),
+            torch.LongTensor(input_type_ids),
+            torch.LongTensor(input_mask)
+        )
+
+    return out.data.numpy()

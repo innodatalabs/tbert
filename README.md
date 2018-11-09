@@ -1,7 +1,7 @@
 # tBERT
 BERT model converted to PyTorch.
 
-This is a literate line-by-line port of BERT code from TensorFlow to PyTorch.
+This is a literate port of BERT code from TensorFlow to PyTorch.
 See the [original TF BERT repo here](https://github.com/google-research/bert).
 
 There is a script that converts TF BERT pre-trained checkpoint to tBERT: `tbert.cli.convert`
@@ -11,6 +11,8 @@ Testing is done to ensure that tBERT code behaves exactly as TF BERT.
 See also alternative PyTorch port by guys from HuggingFace: https://github.com/huggingface/pytorch-pretrained-BERT.git
 
 ## Installation
+
+Python3 is required.
 
 ```
 git clone https://github.com/innodatalabs/tbert.git

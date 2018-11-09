@@ -1,7 +1,7 @@
 import json
 import pickle
 import collections
-from tbert.data import parse_example, example_to_feats, batch
+from tbert.data import parse_example, example_to_feats, batcher
 import tokenization  # from original BERT repo
 import torch
 
@@ -28,7 +28,7 @@ def predict_json_features(bert, examples, batch_size=32, layer_indexes=None):
         layer_indexes = [-1, -2, -3, -4]
 
     unique_id = 0
-    for b in batch(examples, batch_size=batch_size):
+    for b in batcher(examples, batch_size=batch_size):
         input_ids      = torch.LongTensor(b['input_ids'])
         input_type_ids = torch.LongTensor(b['input_type_ids'])
         input_mask     = torch.LongTensor(b['input_mask'])

@@ -1,6 +1,7 @@
 import torch
 from tbert.embedding import BertEmbedding
 from tbert.transformer import TransformerEncoder
+from tbert.attention import init_linear
 
 
 class Bert(torch.nn.Module):
@@ -59,3 +60,36 @@ class Bert(torch.nn.Module):
 
         return outputs
 
+
+class BertPooler(torch.nn.Module):
+
+    def __init__(self, config):
+        torch.nn.Module.__init__(self)
+
+        if config['attention_probs_dropout_prob'] != config['hidden_dropout_prob']:
+            raise NotImplementedError()
+
+        dropout = config['attention_probs_dropout_prob']
+        hidden_size = config['hidden_size']
+
+        self.bert = Bert(config)
+
+        self.pooler = torch.nn.Linear(hidden_size, hidden_size)
+        self.dropout = torch.nn.Dropout(dropout)
+
+        init_linear(self.pooler, config['initializer_range'])
+
+    def forward(self, input_ids, input_type_ids=None, input_mask=None):
+        batch_size = input_ids.size(0)
+
+        activations = self.bert(input_ids, input_type_ids, input_mask)
+
+        x = activations[-1]  # use top layer only
+        x = x.view(batch_size, -1, x.size(-1))  # [B, S, H]
+        # take activations of the first token (aka BERT-style "pooling")
+        x = x[:, 0:1, :].squeeze(1)
+
+        x = self.pooler(x)
+        x = torch.tanh(x)
+
+        return x

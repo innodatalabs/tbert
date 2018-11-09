@@ -1,40 +1,42 @@
+import pickle
+import json
+import csv
+import torch
+import torch.nn.functional as F
 from tbert.data import example_to_feats
+from tbert.bert import BertPooler
+from tbert.attention import init_linear
+from tbert.data import repeating_reader, batcher, shuffler
+import tokenization
 
 
 class BertClassifier(torch.nn.Module):
 
-    def __init__(self, config, num_labels):
-        torch.nn.Module.__init__(self, config)
+    def __init__(self, config, num_classes):
+        torch.nn.Module.__init__(self)
 
-        if config['attention_probs_dropout_prob'] != config['hidden_dropout_prob']:
-            raise NotImplementedError()
+        self.bert_pooler = BertPooler(config)
+        self.output = torch.nn.Linear(config['hidden_size'], num_classes)
+        self.dropout = torch.nn.Dropout(config['hidden_dropout_prob'])
 
-        dropout = config['attention_probs_dropout_prob']
-        hidden_size = config['hidden_size']
-
-        self.bert = Bert(config)
-
-        self.pooler = torch.nn.Linear(hidden_size, hidden_size)
-        self.output = torch.nn.Linear(hidden_size, num_labels)
-        self.dropout = torch.nn.Dropout(dropout)
-
-        init_linear(self.pooler, initialization_range)
-        init_linear(self.output, initialization_range)
+        init_linear(self.output, config['initializer_range'])
 
     def forward(self, input_ids, input_type_ids=None, input_mask=None):
 
-        activations = self.bert(input_ids, input_type_ids, input_mask)
-        x = self.pooler(activations[-1])
-        x = torch.tanh(x)
+        x = self.bert_pooler(input_ids, input_type_ids, input_mask)
         x = self.output(x)
         x = self.dropout(x)
 
         return x
 
+    def load_pretrained(self, dir_name):
+        loc = lambda s: f'{dir_name}/{s}'
 
-def loss(logits):
+        with open(loc('bert_model.pickle'), 'rb') as f:
+            self.bert_pooler.bert.load_state_dict(pickle.load(f))
 
-    prob = torch.nn.softmax(logits, dim=-1)
+        with open(loc('pooler_model.pickle'), 'rb') as f:
+            self.bert_pooler.pooler.load_state_dict(pickle.load(f))
 
 
 def _read_tsv(input_file, quotechar=None):
@@ -115,12 +117,12 @@ def _mrpc_reader(data_dir, label_vocab, partition='train'):
         if i == 0:
             continue
         giud = f'{partition}-{i}'
-        text_a = line[8]
-        text_b = line[9]
+        text_a = line[3]
+        text_b = line[4]
         if partition == 'test':
             label = '0'
         else:
-            label = line[-1]
+            label = line[0]
         yield giud, text_a, text_b, label_vocab[label]
 
 
@@ -139,13 +141,13 @@ def _cola_reader(data_dir, label_vocab, partition='train'):
         if partition == 'test' and i == 0:
             continue
         giud = f'{partition}-{i}'
-        text_a = line[3]
-        text_b = line[4]
         if partition == 'test':
             label = '0'
+            text_a = line[1]
         else:
-            label = line[0]
-        yield giud, text_a, text_b, label_vocab[label]
+            label = line[1]
+            text_a = line[3]
+        yield giud, text_a, None, label_vocab[label]
 
 
 _PROBLEMS = {
@@ -159,7 +161,7 @@ _PROBLEMS = {
     ),
     'mrpc': dict(
         labels=['0', '1'],
-        reader=_cola_reader
+        reader=_mrpc_reader
     ),
     'cola': dict(
         labels=['0', '1'],
@@ -168,25 +170,13 @@ _PROBLEMS = {
 }
 
 
-def labeled_example_to_feats(guid, text_a, text_b, label_id, seq_length, tokenizer):
-
-    feats = example_to_feats(text_a, text_b, seq_length, tokenizer)
-    feats.update(label_id=label_id)
-
-    return feats
-
-
 def feats_reader(reader, seq_length, tokenizer):
+    '''Reads samples from reader and makes a feature dictionary for each'''
 
     for guid, text_a, text_b, label_id in reader:
-        yield labeled_example_to_feats(
-            guid,
-            text_a,
-            text_b,
-            label_id,
-            seq_length,
-            tokenizer
-        )
+        feats = example_to_feats(text_a, text_b, seq_length, tokenizer)
+        feats.update(label_id=label_id, guid=guid)
+        yield feats
 
 
 if __name__ == '__main__':
@@ -213,35 +203,34 @@ python run_classifier.py \
 
     parser = argparse.ArgumentParser(description='Reads text file and extracts BERT features for each sample')
 
-    parser.add_argument('input_file', help='Input text file - one example per line')
-    parser.add_argument('output_file', help='Name of the output JSONL file')
-    parser.add_argument('checkpoint_dir', help='Directory with pretrained tBERT checkpoint')
-    parser.add_argument('--layers', default='-1,-2,-3,-4', help='List of layers to include into the output, default="%(default)s"')
+    parser.add_argument('pretrained_dir', help='Directory with pretrained tBERT checkpoint')
     parser.add_argument('--batch_size', default=32, help='Batch size, default %(default)s')
     parser.add_argument('--max_seq_length', default=128, help='Sequence size limit (after tokenization), default is %(default)s')
     parser.add_argument('--do_lower_case', default=True, help='Set to false to retain case-sensitive information, default %(default)s')
 
-    parser.add_argument('--load_checkpoint', help='Directory with pretrained tBERT checkpoint')
     parser.add_argument('--problem', required=True, choices={'cola', 'mnli', 'mrpc', 'xnli'}, help='problem type')
     parser.add_argument('--data_dir', required=True, help='Directory with the data')
     parser.add_argument('--do_train', action='store_true', help='Set this flag to run training')
+    parser.add_argument('--do_eval', action='store_true', help='Set this flag to run evaluation')
+    parser.add_argument('--do_predict', action='store_true', help='Set this flag to run prediction')
 
+    parser.add_argument('--learning_rate', default=2.e-5, help='Learning rate for training, default %(default)s')
+    parser.add_argument('--num_train_epochs', default=3, help='Number of epochs to train, default %(default)s')
+    parser.add_argument('--macro_batch', default=1, help='Number of batches to accumulate gradiends before optimizer does the update, default %(default)s')
 
     args = parser.parse_args()
-    if args.command is None:
-        parser.error('A valid command is required')
 
     problem = _PROBLEMS[args.problem]
     label_vocab = {
         label: i
-        for i, label in enumerate(problem.labels)
+        for i, label in enumerate(problem['labels'])
     }
-    reader = problem.reader
+    reader = problem['reader']
 
-    ckpt = lambda s: f'{args.load_checkpoint}/{s}'
-    out  = lambda s: f'{args.output_dir}/{s}'
+    inp = lambda s: f'{args.pretrained_dir}/{s}'
+    out = lambda s: f'{args.output_dir}/{s}'
 
-    with open(ckpt('bert_config.json'), 'r', encoding='utf-8') as f:
+    with open(inp('bert_config.json'), 'r', encoding='utf-8') as f:
         config = json.load(f)
     print(json.dumps(config, indent=2))
 
@@ -249,69 +238,109 @@ python run_classifier.py \
         raise ValueError('max_seq_length parameter can not exceed config["max_position_embeddings"]')
 
     tokenizer = tokenization.FullTokenizer(
-        vocab_file=ckpt('vocab.txt'),
+        vocab_file=inp('vocab.txt'),
         do_lower_case=args.do_lower_case,
     )
 
-    bert = Bert(config)
-
-    if args.load_checkpoint is not None:
-        with open(args.load_checkpoint, 'rb') as f:
-            bert.load_state_dict(pickle.load(f))
+    classifier = BertClassifier(config, len(label_vocab))
+    classifier.load_pretrained(args.pretrained_dir)
 
     if args.do_train:
-        bert.train()
+        classifier.train()
+
+        reader = repeating_reader(
+            args.num_train_epochs,
+            reader,
+            args.data_dir,
+            label_vocab,
+            partition='train'
+        )
 
         reader = feats_reader(
-            problem.reader(args.data_dir, 'train'),
+            reader,
             args.max_seq_length,
             tokenizer
         )
 
-        reader = shuffle_stream(reader)
+        reader = shuffler(reader)
 
+        opt = torch.optim.Adam(
+            classifier.parameters(),
+            lr=args.learning_rate,
+            betas=(0.9, 0.999),
+            eps=1.e-6
+        )
+
+        batch_count = 0
+        for batch in batcher(reader, batch_size=args.batch_size):
+            input_ids      = torch.LongTensor(batch['input_ids'])
+            input_type_ids = torch.LongTensor(batch['input_type_ids'])
+            input_mask     = torch.LongTensor(batch['input_mask'])
+            label_id       = torch.LongTensor(batch['label_id'])
+
+            if batch_count == 0:
+                opt.zero_grad()
+
+            logits = classifier(input_ids, input_type_ids, input_mask)
+            log_probs = F.log_softmax(logits, dim=-1)
+            loss = F.nll_loss(log_probs, label_id, reduction='elementwise_mean')
+            print('loss:', loss.item())
+            loss.backward()
+
+            batch_count += 1
+            if batch_count >= args.macro_batch:
+                batch_count = 0
+                opt.step()
 
     if args.do_eval:
-        bert.eval()
+        classifier.eval()
 
         reader = feats_reader(
-            problem.reader(args.data_dir, 'test'),
+            problem.reader(args.data_dir, label_vocab, partition='dev'),
             args.max_seq_length,
             tokenizer
         )
 
-        with open(f'{args.output_dir}/eval_results.txt', 'w') as f:
-            for b in shape_batch(reader, batch_size=args.eval_batch_size):
+        total_loss = 0.
+        total_samples = 0
+        ttoal_hits = 0
+        for b in batcher(reader, batch_size=args.batch_size):
+            input_ids      = torch.LongTensor(b['input_ids'])
+            input_type_ids = torch.LongTensor(b['input_type_ids'])
+            input_mask     = torch.LongTensor(b['input_mask'])
+            label_id       = torch.LongTensor(b['label_id'])
+
+            logits = classifier(input_ids, input_type_ids, input_mask)
+            loss = F.nll_loss(logits, label_id, reduction='sum').item()
+            prediction = torch.argmax(logits, dim=-1)
+            hits = (label_id == prediction).sum().item()
+
+            total_loss += loss
+            total_hits += hits
+            total_samples += input_ids.size(0)
+
+        print('Number of samples evaluated:', total_samples)
+        print('Average per-sample loss:', total_loss / total_samples)
+        print('Accuracy:', hits / total_samples)
+
+    if args.do_predict:
+        classifier.eval()
+
+        reader = feats_reader(
+            problem.reader(args.data_dir, label_vocab, partition='test'),
+            args.max_seq_length,
+            tokenizer
+        )
+
+        with open(args.output_dir + '/test_results.tsv', 'w') as f:
+            for b in batcher(reader, batch_size=args.eval_batch_size):
                 input_ids      = torch.LongTensor(b['input_ids'])
                 input_type_ids = torch.LongTensor(b['input_type_ids'])
                 input_mask     = torch.LongTensor(b['input_mask'])
-                label_id       = torch.LongTensor(b['label_id'])
 
-                logits = bert(input_ids, input_type_ids, input_mask, label_id)
-
-    if args.do_predict:
-        bert.eval()
-
-        with open(args.output_dir + '/test_results.tsv', 'w') as f:
-            for sample in problem.reader(args.data_dir, 'predict'):
-                feats = labeled_example_to_feats(*sample, args.max_sequence_len, tokenizer)
-
-                f.write('\t'.join(str(prob) for prob in predictions) + '\n')
-
-
-
-    bert.eval()
-
-    layer_indexes = eval('[' + args.layers + ']')
-
-    examples = read_examples(args.input_file, args.max_seq_length, tokenizer)
-
-    with open(args.output_file, 'w', encoding='utf-8') as f:
-        for feat_json in predict_json_features(
-                bert,
-                examples,
-                batch_size=args.batch_size,
-                layer_indexes=layer_indexes):
-            f.write(json.dumps(feat_json) + '\n')
+                logits = classifier(input_ids, input_type_ids, input_mask)
+                prob = F.softmax(logits, dim=-1)
+                for i in range(prob.shape(0)):
+                    f.write('\t'.join(str(p) for p in prob[i].to_list()) + '\n')
 
     print('All done')

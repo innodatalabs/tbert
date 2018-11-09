@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import random
 from tbert.tf_util import tracer_session, get_tf_bert_init_params, \
-    make_bert_state_dict, run_tf_bert_once, run_tbert_once
+    run_tf_bert_once, run_tbert_once, run_tbert_pooler_once
 
 
 # to get stable results
@@ -55,7 +55,7 @@ PARAMS_BIG = get_tf_bert_init_params(CONFIG_BIG)
 
 
 def assert_same(*av, tolerance=1.e-6):
-    tf_out = run_tf_bert_once(*av)
+    tf_out, _ = run_tf_bert_once(*av)
     tbert_out = run_tbert_once(*av)
 
     # compare
@@ -63,6 +63,15 @@ def assert_same(*av, tolerance=1.e-6):
     for x,y in zip(tf_out, tbert_out):
         delta = np.max(np.abs(x.flatten()-y.flatten()))
         assert delta < tolerance, delta
+
+
+def assert_same_pooler(*av, tolerance=1.e-6):
+    _, tf_logits = run_tf_bert_once(*av)
+    tbert_logits = run_tbert_pooler_once(*av)
+
+    # compare
+    delta = np.max(np.abs(tf_logits.flatten()-tbert_logits.flatten()))
+    assert delta < tolerance, delta
 
 
 def make_random_inputs(vocab_size, shape):
@@ -92,3 +101,16 @@ def test_random_big():
 
     assert_same(CONFIG_BIG, PARAMS_BIG, input_ids, input_type_ids, input_mask,
         tolerance=1e-4)
+
+
+def test_pooler():
+    input_ids, input_type_ids, input_mask = make_random_inputs(100, (2, 5))
+
+    assert_same_pooler(CONFIG_MICRO, PARAMS_MICRO, input_ids, input_type_ids, input_mask)
+
+
+def test_pooler_big():
+    input_ids, input_type_ids, input_mask = make_random_inputs(10000, (10, 128))
+
+    assert_same_pooler(CONFIG_BIG, PARAMS_BIG, input_ids, input_type_ids, input_mask,
+        tolerance=2.e-6)

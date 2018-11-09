@@ -4,6 +4,7 @@ Heavily borrows from the original TF BERT code:
 '''
 import re
 import collections
+import random
 import torch
 
 
@@ -117,7 +118,7 @@ def group(sequence, batch_size=32, allow_incomplete=True):
         yield buffer
 
 
-def batch(sequence, batch_size=32, allow_incomplete=True):
+def batcher(sequence, batch_size=32, allow_incomplete=True):
     '''Batches input sequence of features'''
 
     def shape_batch(batch):
@@ -133,3 +134,31 @@ def batch(sequence, batch_size=32, allow_incomplete=True):
             allow_incomplete=allow_incomplete
         ):
         yield shape_batch(batch)
+
+
+def shuffler(stream, buffer_size=100000):
+    '''Shuffles stream of input samples.
+
+    Uses internal buffer to hold samples delayed for shuffling.
+    Bigger buffer size gives better shuffling.
+    '''
+    buffer = []
+    for sample in stream:
+        if len(buffer) >= buffer_size:
+            random.shuffle(buffer)
+            yield from buffer[len(buffer)//2:]
+            buffer = buffer[len(buffer)//2:]
+        buffer.append(sample)
+
+    random.shuffle(buffer)
+    yield from buffer
+
+
+def repeating_reader(num_epochs: int, reader_factory, *av, **kav):
+    '''Creates a bigger stream of samples by repeating data
+    for the specified number of epochs. To repeat indefinetely
+    use num_epochs=-1
+    '''
+    while num_epochs != 0:
+        yield from reader_factory(*av, **kav)
+        num_epochs -= 1
