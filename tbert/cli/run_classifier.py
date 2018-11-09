@@ -201,8 +201,8 @@ if __name__ == '__main__':
     parser.add_argument('--do_predict', action='store_true', help='Set this flag to run prediction')
 
     parser.add_argument('--learning_rate', default=2.e-5, help='Learning rate for training, default %(default)s')
-    parser.add_argument('--num_train_steps', default=1000, help='Number of training steps, default %(default)s')
-    parser.add_argument('--num_warmup_steps', default=200, help='Number of learning rate warmup steps, default %(default)s')
+    parser.add_argument('--num_train_steps', default=1000, type=int, help='Number of training steps, default %(default)s')
+    parser.add_argument('--num_warmup_steps', default=200, type=int, help='Number of learning rate warmup steps, default %(default)s')
     parser.add_argument('--macro_batch', default=1, help='Number of batches to accumulate gradiends before optimizer does the update, default %(default)s')
     parser.add_argument('--print_every', default=10, help='How often to print training stats, default %(default)s')
 
