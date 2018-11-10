@@ -16,16 +16,93 @@ See also alternative PyTorch port by guys from HuggingFace: https://github.com/h
 
 Python 3.6 or better is required.
 
+Easiest way to install is with the `pip`:
 ```
-git clone https://github.com/innodatalabs/tbert.git
-cd tbert
-virtualenv .venv -p python3
-. .venv/bin/activate
-pip install -r requirements.txt
+pip install tbert
 ```
+Now you can start using tbert models in your code!
 
-To run unit tests and CLI utilities, original TF BERT code is required (we use it for tokenization):
+## Using tBERT model in your PyTorch code
+
+### tbert.bert.Bert
+This is the main juice - the Bert transformer. It is a normal PyTorch module.
+You can use it stand-alone or in combination with other modules.
+
 ```
+from tbert.bert import Bert
+
+config = dict(
+    attention_probs_dropout_prob=0.1,
+    directionality="bidi",
+    hidden_act="gelu",
+    hidden_dropout_prob=0.1,
+    hidden_size=768,
+    initializer_range=0.02,
+    intermediate_size=3072,
+    max_position_embeddings=512,
+    num_attention_heads=12,
+    num_hidden_layers=12,
+    type_vocab_size=2,
+    vocab_size=105879
+)
+
+bert = Bert(config)
+# ... should load trained parameters (see below)
+
+input_ids      = torch.LongTensor([[1, 2, 3, 4, 5, 0]])
+input_type_ids = torch.LongTensor([[0, 0, 1, 1, 1, 0]])
+input_mask     = torch.LongTensor([[1, 1, 1, 1, 1, 0]])
+
+activations = bert(input_ids, input_type_ids, input_mask)
+```
+Returns an array of activations (for each hidden layer).
+Typically only the topmost, or few top layers are used.
+Each element in the array is a Tensor of shape [B*S, H]
+where B is the batch size, S is the sequence length, and H is the
+size of the hidden layer.
+
+### tbert.bert.BertPooler
+This is the Bert transformer with pooling layer on the top.
+Convenient for sequence classification tasks. Use is very similar to
+that of `tbert.bert.Bert` module:
+```
+from tbert.bert import Bert
+
+config = dict(
+    attention_probs_dropout_prob=0.1,
+    directionality="bidi",
+    hidden_act="gelu",
+    hidden_dropout_prob=0.1,
+    hidden_size=768,
+    initializer_range=0.02,
+    intermediate_size=3072,
+    max_position_embeddings=512,
+    num_attention_heads=12,
+    num_hidden_layers=12,
+    type_vocab_size=2,
+    vocab_size=105879
+)
+
+bert_pooler = BertPooler(config)
+# ... should load trained parameters (see below)
+
+input_ids      = torch.LongTensor([[1, 2, 3, 4, 5, 0]])
+input_type_ids = torch.LongTensor([[0, 0, 1, 1, 1, 0]])
+input_mask     = torch.LongTensor([[1, 1, 1, 1, 1, 0]])
+
+activation = bert_pooler(input_ids, input_type_ids, input_mask)
+```
+Returns a single tensor of size [B, H], where
+B is the batch size, and H is teh size of the hidden layer.
+
+## Installing optional dependencies
+Optional deps are needed to use CLI utilities:
+* to convert TF BERT checkpoint to tBERT format
+* to extract features from a sequence
+* to run training of classifier
+
+```
+pip install -r requirements.txt
 mkdir tf
 cd tf
 git clone https://github.com/google-research/bert
@@ -40,13 +117,12 @@ python -m tbert.cli.convert --help
 ```
 
 ## Running unit tests
-
 ```
 pip install pytest
 pytest tbert/test
 ```
 
-### Converting TF BERT pre-trained checkpoint to tBERT
+## Converting TF BERT pre-trained checkpoint to tBERT
 
 * Download TF BERT checkpoint and unzip it
   ```
@@ -63,7 +139,7 @@ pytest tbert/test
     data/tbert-multilingual_L-12_H-768_A-12
   ```
 
-### Extracting features
+## Extracting features
 
 Make sure that you have pre-trained tBERT model (see section above).
 
@@ -77,7 +153,7 @@ python -m tbert.cli.extract_features \
     data/tbert-multilingual_L-12_H-768_A-12
 ```
 
-### Comparing TF BERT and tBERT results
+## Comparing TF BERT and tBERT results
 
 Run TF BERT `extract_features`:
 ```
