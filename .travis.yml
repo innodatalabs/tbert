@@ -2,7 +2,7 @@ language: python
 python:
   - "3.6"
 install:
-  - pip install -r requirements.txt
+  - pip install -q -r requirements.txt
   - (mkdir tf; cd tf; git clone https://github.com/google-research/bert)
 script:
   - PYTHONPATH=.:tf/bert pytest tbert/test)
