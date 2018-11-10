@@ -21,7 +21,7 @@ Easiest way to install is with the `pip`:
 ```
 pip install tbert
 ```
-Now you can start using tbert models in your code!
+Now you can start using tBERT models in your code!
 
 ## Using tBERT model in your PyTorch code
 
@@ -94,7 +94,7 @@ input_mask     = torch.LongTensor([[1, 1, 1, 1, 1, 0]])
 activation = bert_pooler(input_ids, input_type_ids, input_mask)
 ```
 Returns a single tensor of size [B, H], where
-B is the batch size, and H is teh size of the hidden layer.
+B is the batch size, and H is the size of the hidden layer.
 
 ### Programmatically loading pre-trained weights
 To initialize `tbert.bert.Bert` or `tbert.bert.BertPooler` from pre-trained
@@ -115,7 +115,7 @@ instance.
 Optional deps are needed to use CLI utilities:
 * to convert TF BERT checkpoint to tBERT format
 * to extract features from a sequence
-* to run training of classifier
+* to run training of a classifier
 
 ```
 pip install -r requirements.txt
@@ -211,7 +211,7 @@ Structure is identical
 Download GLUE datasets, as explained
 [here](https://github.com/google-research/bert#sentence-and-sentence-pair-classification-tasks).
 In the following we assume that
-GLUE dataset are in the `glue_data` directory.
+GLUE datasets are in the `glue_data` directory.
 
 To train MRPC task, do this:
 ```
