@@ -13,6 +13,12 @@ Testing is done to ensure that tBERT code behaves exactly as TF BERT.
 
 See also alternative PyTorch port by folks from HuggingFace: https://github.com/huggingface/pytorch-pretrained-BERT.git
 
+
+## License
+This work uses MIT license.
+
+Original code is covered by Apache 2.0 License.
+
 ## Installation
 
 Python 3.6 or better is required.
@@ -29,7 +35,7 @@ Now you can start using tBERT models in your code!
 This is the main juice - the Bert transformer. It is a normal PyTorch module.
 You can use it stand-alone or in combination with other PyTorch modules.
 
-```
+```python
 from tbert.bert import Bert
 
 config = dict(
@@ -66,7 +72,7 @@ size of the hidden layer.
 This is the Bert transformer with pooling layer on the top.
 Convenient for sequence classification tasks. Use is very similar to
 that of `tbert.bert.Bert` module:
-```
+```python
 from tbert.bert import Bert
 
 config = dict(

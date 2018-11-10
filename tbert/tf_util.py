@@ -1,3 +1,6 @@
+# The MIT License
+# Copyright 2019 Innodata Labs and Mike Kroutikov
+#
 '''
 Utilities to trace TF graph execution, capture TF BERT parameters,
 and convert them to PyTorch.

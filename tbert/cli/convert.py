@@ -1,3 +1,6 @@
+# The MIT License
+# Copyright 2019 Innodata Labs and Mike Kroutikov
+#
 import json
 from tbert.tf_util import read_tf_checkpoint, make_bert_pooler_state_dict
 from tbert.bert import BertPooler

@@ -1,3 +1,6 @@
+# The MIT License
+# Copyright 2019 Innodata Labs and Mike Kroutikov
+#
 import json
 from types import SimpleNamespace
 
