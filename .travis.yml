@@ -5,4 +5,4 @@ install:
   - pip install -q -r requirements.txt
   - (mkdir tf; cd tf; git clone https://github.com/google-research/bert)
 script:
-  - PYTHONPATH=.:tf/bert pytest tbert/test)
+  - PYTHONPATH=.:tf/bert pytest tbert/test
