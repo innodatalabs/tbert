@@ -1,4 +1,6 @@
 # tBERT
+[![PyPI version](https://badge.fury.io/py/tbert.svg)](https://badge.fury.io/py/tbert)
+
 BERT model converted to PyTorch.
 
 This is a literate port of BERT code from TensorFlow to PyTorch.
