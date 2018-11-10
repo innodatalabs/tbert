@@ -1,4 +1,4 @@
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 __description__ = 'BERT Neural Net module for pytorch'
 __url__ = 'https://github.com/innodatalabs/tbert'
 __author__ = 'Mike Kroutikov'
