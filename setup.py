@@ -25,7 +25,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=[NAME],
-    install_requires=['torch~=4.2.0'],
+    install_requires=['torch~=0.4.1'],
     entry_points={
         'console_scripts': [
             'ilabs_bulk_predict=ilabs.client.ilabs_bulk_predict:main',
