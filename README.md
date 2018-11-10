@@ -3,10 +3,10 @@
 
 BERT model converted to PyTorch.
 
-This is a literate port of BERT code from TensorFlow to PyTorch.
+This is a literal port of BERT code from TensorFlow to PyTorch.
 See the [original TF BERT repo here](https://github.com/google-research/bert).
 
-There is a script that converts TF BERT pre-trained checkpoint to tBERT: `tbert.cli.convert`
+We provide a script to converts TF BERT pre-trained checkpoint to tBERT: `tbert.cli.convert`
 
 Testing is done to ensure that tBERT code behaves exactly as TF BERT.
 
@@ -26,7 +26,7 @@ Now you can start using tbert models in your code!
 
 ### tbert.bert.Bert
 This is the main juice - the Bert transformer. It is a normal PyTorch module.
-You can use it stand-alone or in combination with other modules.
+You can use it stand-alone or in combination with other PyTorch modules.
 
 ```
 from tbert.bert import Bert
@@ -95,6 +95,21 @@ activation = bert_pooler(input_ids, input_type_ids, input_mask)
 Returns a single tensor of size [B, H], where
 B is the batch size, and H is teh size of the hidden layer.
 
+### Programmatically loading pre-trained weights
+To initialize `tbert.bert.Bert` or `tbert.bert.BertPooler` from pre-trained
+saved checkpoint:
+```
+...
+bert = Bert(config)
+bert.load_pretrained(dir_name)
+```
+Here, `dir_name` should be a directory containing pre-trained tBIRT model,
+with `bert_model.pickle` and `pooler_model.pickle` files. See below to learn how
+to convert published TF BERT pre-trained models to tBERT format.
+
+Similarly, `load_pretrained` method can be used on `tbert.bert.BertPooler`
+instance.
+
 ## Installing optional dependencies
 Optional deps are needed to use CLI utilities:
 * to convert TF BERT checkpoint to tBERT format
@@ -114,6 +129,7 @@ Now all is set up:
 ```
 python -m tbert.cli.extract_features --help
 python -m tbert.cli.convert --help
+python -m tbert.cli.run_classifier --help
 ```
 
 ## Running unit tests

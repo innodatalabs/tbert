@@ -1,3 +1,4 @@
+import pickle
 import torch
 from tbert.embedding import BertEmbedding
 from tbert.transformer import TransformerEncoder
@@ -60,6 +61,14 @@ class Bert(torch.nn.Module):
 
         return outputs
 
+    def load_pretrained(self, dir_name):
+        with open(f'{dir_name}/bert_model.pickle', 'rb') as f:
+            self.load_state_dict(pickle.load(f))
+
+    def save_pretrained(self, dir_name):
+        with open(f'{dir_name}/bert_model.pickle', 'wb') as f:
+            pickle.dump(self.state_dict(), f)
+
 
 class BertPooler(torch.nn.Module):
 
@@ -93,3 +102,15 @@ class BertPooler(torch.nn.Module):
         x = torch.tanh(x)
 
         return x
+
+    def load_pretrained(self, dir_name):
+        self.bert.load_pretrained(dir_name)
+
+        with open(f'{dir_name}/pooler_model.pickle', 'rb') as f:
+            self.pooler.load_state_dict(pickle.load(f))
+
+    def save_pretrained(self, dir_name):
+        self.bert.save_pretrained(dir_name)
+
+        with open(f'{dir_name}/pooler_model.pickle', 'wb') as f:
+            pickle.dump(self.pooler.state_dict(), f)

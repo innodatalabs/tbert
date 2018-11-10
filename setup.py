@@ -26,10 +26,4 @@ setup(
     ],
     packages=[NAME],
     install_requires=[],  # do not drag in any deps, to ease re-use
-    entry_points={
-        'console_scripts': [
-            'ilabs_bulk_predict=ilabs.client.ilabs_bulk_predict:main',
-            'ilabs_dv=ilabs.client.ilabs_datavault_api:main'
-        ]
-    }
 )

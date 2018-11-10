@@ -39,10 +39,6 @@ if __name__ == '__main__':
         make_bert_pooler_state_dict(bert_vars, config['num_hidden_layers'])
     )
 
-    with open(trg('bert_model.pickle'), 'wb') as f:
-        pickle.dump(bert_pooler.bert.state_dict(), f)
-
-    with open(trg('pooler_model.pickle'), 'wb') as f:
-        pickle.dump(bert_pooler.pooler.state_dict(), f)
+    bert_pooler.save_pretrained(args.output_dir)
 
     print('Sucessfully created tBERT model in', args.output_dir)

@@ -33,13 +33,7 @@ class BertClassifier(torch.nn.Module):
         return x
 
     def load_pretrained(self, dir_name):
-        loc = lambda s: f'{dir_name}/{s}'
-
-        with open(loc('bert_model.pickle'), 'rb') as f:
-            self.bert_pooler.bert.load_state_dict(pickle.load(f))
-
-        with open(loc('pooler_model.pickle'), 'rb') as f:
-            self.bert_pooler.pooler.load_state_dict(pickle.load(f))
+        self.bert_pooler.load_pretrained(dir_name)
 
 
 def _read_tsv(input_file, quotechar=None):
