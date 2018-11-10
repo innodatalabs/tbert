@@ -1,5 +1,6 @@
 # tBERT
 [![PyPI version](https://badge.fury.io/py/tbert.svg)](https://badge.fury.io/py/tbert)
+[![Build Status](https://travis-ci.com/innodatalabs/tbert.svg?branch=master)](https://travis-ci.com/innodatalabs/tbert)
 
 BERT model converted to PyTorch.
 
