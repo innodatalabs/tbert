@@ -23,7 +23,7 @@
 from torch.optim.lr_scheduler import LambdaLR
 
 
-class LinearDecayWithWarpupLR(LambdaLR):
+class LinearDecayWithWarmupLR(LambdaLR):
 
     def __init__(self, optimizer, train_steps, warmup_steps, last_epoch=-1):
 

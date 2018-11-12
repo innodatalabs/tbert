@@ -31,7 +31,7 @@ from tbert.data import example_to_feats
 from tbert.bert import BertPooler
 from tbert.attention import init_linear
 from tbert.data import repeating_reader, batcher, shuffler
-from tbert.optimization import LinearDecayWithWarpupLR
+from tbert.optimization import LinearDecayWithWarmupLR
 import tokenization
 
 
@@ -286,7 +286,7 @@ if __name__ == '__main__':
             eps=1.e-6
         )
 
-        lr_schedule = LinearDecayWithWarpupLR(
+        lr_schedule = LinearDecayWithWarmupLR(
             opt,
             args.num_train_steps,
             args.num_warmup_steps
