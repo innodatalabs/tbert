@@ -18,3 +18,4 @@ glue_data/
 *.tsv
 build/
 dist/
+.ipynb_checkpoints/
