@@ -35,8 +35,10 @@ the [original TF BERT repo here](https://github.com/google-research/bert#pre-tra
 
 * [Base, Uncased](https://storage.googleapis.com/public.innodatalabs.com/tbert-uncased_L-12_H-768_A-12.zip)
 * [Large, Uncased](https://storage.googleapis.com/public.innodatalabs.com/tbert-uncased_L-24_H-1024_A-16.zip)
-* [Base, Multilingual](https://storage.googleapis.com/public.innodatalabs.com/tbert-multilingual_L-12_H-768_A-12.zip)
 * [Base, Cased](https://storage.googleapis.com/public.innodatalabs.com/tbert-cased_L-12_H-768_A-12.zip)
+* [Large, Cased](https://storage.googleapis.com/public.innodatalabs.com/tbert-cased_L-24_H-1024_A-16.zip)
+* [Base, Multilingual Cased (New, recommended)](https://storage.googleapis.com/public.innodatalabs.com/tbert-multi_cased_L-12_H-768_A-12.zip)
+* [Base, Multilingual Uncased (Not recommended)](https://storage.googleapis.com/public.innodatalabs.com/tbert-multilingual_L-12_H-768_A-12.zip)
 * [Base, Chinese](https://storage.googleapis.com/public.innodatalabs.com/tbert-chinese_L-12_H-768_A-12.zip)
 
 ## Using tBERT model in your PyTorch code
