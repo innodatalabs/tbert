@@ -4,8 +4,8 @@
 
 BERT model converted to PyTorch.
 
-Please, **do NOT use this repo**, instead use the library from
-folks from HuggingFace: https://github.com/huggingface/pytorch-pretrained-BERT.git
+Please, **do NOT use this repo**, instead use the (better) library from
+HuggingFace: https://github.com/huggingface/pytorch-pretrained-BERT.git
 
 This repo is kept as an example of converting TF model to PyTorch (utilis may be handy in case I need
 to do some thing like this again).
