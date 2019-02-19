@@ -2,7 +2,13 @@
 [![PyPI version](https://badge.fury.io/py/tbert.svg)](https://badge.fury.io/py/tbert)
 [![Build Status](https://travis-ci.com/innodatalabs/tbert.svg?branch=master)](https://travis-ci.com/innodatalabs/tbert)
 
-BERT model converted to PyTorch. Easy to install. Easy to use in your code!
+BERT model converted to PyTorch.
+
+Please, **do NOT use this repo**, instead use the library from
+folks from HuggingFace: https://github.com/huggingface/pytorch-pretrained-BERT.git
+
+This repo is kept as an example of converting TF model to PyTorch (utilis may be handy in case I need
+to do some thing like this again).
 
 This is a literal port of BERT code from TensorFlow to PyTorch.
 See the [original TF BERT repo here](https://github.com/google-research/bert).
@@ -10,9 +16,6 @@ See the [original TF BERT repo here](https://github.com/google-research/bert).
 We provide a script to convert TF BERT pre-trained checkpoint to tBERT: `tbert.cli.convert`
 
 Testing is done to ensure that tBERT code behaves exactly as TF BERT.
-
-See also alternative PyTorch port by folks from HuggingFace: https://github.com/huggingface/pytorch-pretrained-BERT.git
-
 
 ## License
 This work uses MIT license.
